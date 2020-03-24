@@ -36,8 +36,14 @@ def _recursive_folderstats(folderpath, items=None, hash_name=None,
                 continue
 
             filepath = os.path.join(folderpath, f)
-            stats = os.stat(filepath)
-            foldersize += stats.st_size
+            try:
+                stats = os.stat(filepath)
+                foldersize += stats.st_size
+            except FileNotFoundError:
+                stats = None
+                if verbose:
+                    print(f"skipping {filepath} as it's not found")
+                pass
             idx += 1
 
             if os.path.isdir(filepath):
@@ -52,9 +58,19 @@ def _recursive_folderstats(folderpath, items=None, hash_name=None,
             else:
                 filename, extension = os.path.splitext(f)
                 extension = extension[1:] if extension else None
-                item = [idx, filepath, filename, extension, stats.st_size,
-                        stats.st_atime, stats.st_mtime, stats.st_ctime,
-                        False, None, depth, current_idx, stats.st_uid]
+                item = [idx, 
+                        filepath,
+                        filename,
+                        extension,
+                        (stats.st_size if stats else 0),
+                        (stats.st_atime if stats else 0),
+                        (stats.st_mtime if stats else 0),
+                        (stats.st_ctime if stats else 0),
+                        False,
+                        None,
+                        depth,
+                        current_idx,
+                        (stats.st_uid if stats else 0)]
                 if hash_name:
                     item.append(calculate_hash(filepath, hash_name))
                 items.append(item)
